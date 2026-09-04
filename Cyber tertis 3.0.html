@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cyber Tertis - Sound Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            margin: 0;
+            padding: 10px;
+            background: radial-gradient(circle at center, #2b0054 0%, #010004 100%);
+            font-family: 'Orbitron', sans-serif;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .game-layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            background: rgba(15, 0, 35, 0.85);
+            backdrop-filter: blur(12px);
+            border: 3px solid #00ffff;
+            box-shadow: 0 0 60px rgba(0, 255, 255, 0.8), inset 0 0 40px rgba(255, 0, 255, 0.6);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .main-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .game-header-title {
+            font-size: 16px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #ff00ff, 0 0 50px #ff00ff;
+            margin-bottom: 8px;
+            letter-spacing: 4px;
+            text-align: center;
+            animation: titleGlow 0.6s infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0% { text-shadow: 0 0 10px #00ffff, 0 0 20px #ff00ff; transform: scale(1); }
+            100% { text-shadow: 0 0 25px #ffffff, 0 0 40px #00ffff, 0 0 70px #ff00ff; transform: scale(1.03); }
+        }
+
+        .board-wrapper {
+            position: relative;
+        }
+
+        .shake {
+            animation: megaShake 0.25s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes megaShake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-15px, 12px) rotate(-1deg); }
+            40% { transform: translate(15px, -12px) rotate(1deg); }
+            60% { transform: translate(-12px, -10px) rotate(-0.5deg); }
+            80% { transform: translate(12px, 10px) rotate(0.5deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        .flash-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0);
+            pointer-events: none;
+            border-radius: 8px;
+            z-index: 4;
+            transition: background 0.03s ease-out;
+        }
+
+        .flash-overlay.active {
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        canvas {
+            display: block;
+            background: rgba(2, 0, 10, 0.95);
+            border: 3px solid #00ffff;
+            box-shadow: 0 0 45px rgba(0, 255, 255, 0.9), inset 0 0 25px rgba(255, 0, 255, 0.7);
+            border-radius: 8px;
+            width: 240px;
+            height: 480px;
+        }
+
+        #combo-popup {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.2);
+            font-size: 36px;
+            font-weight: 900;
+            color: #ffff00;
+            text-shadow: 0 0 15px #ffffff, 0 0 30px #ff00ff, 0 0 60px #00ffff, 0 0 90px #ff00ff;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.6);
+            z-index: 6;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        #combo-popup.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.5);
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 180px;
+        }
+
+        .panel-box {
+            background: rgba(10, 0, 25, 0.8);
+            border: 2px solid #ff00ff;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: inset 0 0 20px rgba(255, 0, 255, 0.4), 0 0 15px rgba(255, 0, 255, 0.3);
+        }
+
+        .panel-box h3 {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            color: #00ffff;
+            letter-spacing: 1.5px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .panel-box .value {
+            font-size: 20px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 15px #ff00ff, 0 0 25px #00ffff;
+        }
+
+        .controls-guide {
+            font-size: 11px;
+            color: #e0d0ff;
+            line-height: 1.6;
+            text-align: left;
+        }
+
+        .controls-guide span {
+            color: #00ffff;
+            font-weight: bold;
+            text-shadow: 0 0 6px #00ffff;
+        }
+
+        .touch-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-top: 5px;
+        }
+
+        .control-btn {
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            padding: 10px 0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.6);
+            text-align: center;
+            transition: all 0.1s;
+        }
+
+        .control-btn:active {
+            background: #00ffff;
+            color: #010004;
+            box-shadow: 0 0 25px #00ffff;
+        }
+
+        .control-btn.action-drop {
+            border-color: #ff00ff;
+            color: #ff00ff;
+            box-shadow: 0 0 12px rgba(255, 0, 255, 0.6);
+            grid-column: span 2;
+        }
+
+        .control-btn.action-drop:active {
+            background: #ff00ff;
+            color: #010004;
+            box-shadow: 0 0 25px #ff00ff;
+        }
+
+        .quit-btn {
+            width: 100%;
+            background: rgba(255, 0, 85, 0.25);
+            border: 2px solid #ff0055;
+            color: #ff0055;
+            padding: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.6);
+            transition: all 0.1s;
+        }
+
+        .quit-btn:active, .quit-btn:hover {
+            background: #ff0055;
+            color: #fff;
+            box-shadow: 0 0 30px #ff0055;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(1, 0, 4, 0.96);
+            backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .overlay h1 {
+            font-size: 26px;
+            color: #ffffff;
+            text-shadow: 0 0 20px #00ffff, 0 0 40px #ff00ff, 0 0 60px #00ffff;
+            margin-bottom: 12px;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .menu-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            border: none;
+            color: #ffffff;
+            padding: 11px 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 900;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.8);
+            transition: all 0.2s;
+            text-align: center;
+            text-shadow: 0 0 8px rgba(0,0,0,0.7);
+        }
+
+        .btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 45px #ff00ff, 0 0 20px #00ffff;
+        }
+
+        .btn-sub {
+            background: rgba(255, 0, 255, 0.3);
+            border: 2px solid #ff00ff;
+            color: #ff00ff;
+            font-size: 12px;
+            padding: 9px 15px;
+            text-shadow: 0 0 10px #ff00ff;
+        }
+
+        .settings-form {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+            max-width: 230px;
+            font-size: 10px;
+            color: #e0d0ff;
+            margin-bottom: 12px;
+            text-align: left;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .settings-form label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .settings-form input, .settings-form select {
+            width: 110px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid #00ffff;
+            color: #ffffff;
+            padding: 4px;
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+        }
+
+        .settings-section-title {
+            color: #00ffff;
+            font-weight: 900;
+            margin-top: 6px;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.5);
+            padding-bottom: 2px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        @media (max-width: 600px) {
+            .game-layout {
+                flex-direction: column;
+                align-items: center;
+                padding: 12px;
+                gap: 12px;
+            }
+            .side-panel {
+                width: 240px;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: space-between;
+            }
+            .panel-box {
+                flex: 1;
+                min-width: 70px;
+                padding: 8px;
+            }
+            .side-panel .controls-guide {
+                display: none; 
+            }
+            .mobile-bottom-area {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .touch-controls {
+                grid-template-columns: repeat(4, 1fr);
+                width: 100%;
+                margin-top: 0;
+            }
+            .control-btn.action-drop {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-layout">
+        <div class="side-panel">
+            <div class="panel-box">
+                <h3>NEXT</h3>
+                <canvas id="next-canvas" width="60" height="60" style="width:60px; height:60px; margin:0 auto; display:block; background:transparent; border:none; box-shadow:none;"></canvas>
+            </div>
+            <div class="panel-box">
+                <h3 id="stat-title">SCORE</h3>
+                <div id="score" class="value">0</div>
+            </div>
+            <div class="panel-box">
+                <h3 id="sub-stat-title">LEVEL</h3>
+                <div id="level" class="value">1</div>
+            </div>
+        </div>
+
+        <div class="main-section">
+            <div class="game-header-title">⚡ CYBER TERTIS ⚡</div>
+            <div class="board-wrapper" id="board-wrapper">
+                <div class="flash-overlay" id="flash-overlay"></div>
+                <div id="combo-popup"></div>
+                <canvas id="tetris" width="300" height="600"></canvas>
+                
+                <div id="start-screen" class="overlay">
+                    <h1>CYBER<br>TERTIS</h1>
+                    <div class="menu-group">
+                        <button class="btn" onclick="startGame('classic')">CLASSIC</button>
+                        <button class="btn" onclick="startGame('timeAttack')">TIME ATTACK</button>
+                        <button class="btn" onclick="startGame('blockLimit')">BLOCK LIMIT</button>
+                        <button class="btn btn-sub" onclick="openSettings()">CUSTOM SETTINGS</button>
+                    </div>
+                </div>
+
+                <div id="pause-screen" class="overlay" style="display: none;">
+                    <h1>GAME PAUSED</h1>
+                    <div class="menu-group">
+                        <button class="btn" onclick="resumeGame()">RETURN</button>
+                        <button class="btn" onclick="restartGame()">RESTART</button>
+                        <button class="btn btn-sub" onclick="returnToMenu()">MAIN MENU</button>
+                    </div>
+                </div>
+
+                <div id="settings-screen" class="overlay" style="display: none;">
+                    <h1>SETTINGS</h1>
+                    <div class="settings-form">
+                        <div class="settings-section-title">🖼️ IMAGE UPLOAD</div>
+                        <label>배경 이미지: <input type="file" id="bg-file" accept="image/*" style="font-size:9px;"></label>
+                        <label>블록 이미지: <input type="file" id="block-file" accept="image/*" style="font-size:9px;"></label>
+
+                        <div class="settings-section-title">🎨 THEME PRESET (20종)</div>
+                        <label>배경 테마: 
+                            <select id="cfg-bg">
+                                <option value="cyber">1. 사이버 네온</option>
+                                <option value="dark">2. 다크 심플</option>
+                                <option value="matrix">3. 매트릭스 그린</option>
+                                <option value="synthwave">4. 썬웨이브 핑크</option>
+                                <option value="galaxy">5. 딥 갤럭시</option>
+                                <option value="sunset">6. 선셋 오렌지</option>
+                                <option value="ocean">7. 아틀란틱 오션</option>
+                                <option value="fire">8. 인페르노 파이어</option>
+                                <option value="emerald">9. 에메랄드 포레스트</option>
+                                <option value="amethyst">10. 아메시스트 퍼플</option>
+                                <option value="gold">11. 로얄 골드</option>
+                                <option value="arctic">12. 아틱 프로스트</option>
+                                <option value="cherry">13. 체리 블로섬</option>
+                                <option value="toxic">14. 토익스 라임</option>
+                                <option value="midnight">15. 미드나잇 블루</option>
+                                <option value="crimson">16. 크림슨 레드</option>
+                                <option value="cyberpunk">17. 사이버 옐로우</option>
+                                <option value="abyss">18. 코스믹 어비스</option>
+                                <option value="coffee">19. 빈티지 모카</option>
+                                <option value="rainbow">20. 레인보우 나이트</option>
+                            </select>
+                        </label>
+                        <label>블록 팔레트: 
+                            <select id="cfg-block">
+                                <option value="neon">1. 네온 사이버</option>
+                                <option value="pastel">2. 파스텔 톤</option>
+                                <option value="mono">3. 모노크롬</option>
+                                <option value="retro">4. 레트로 아케이드</option>
+                                <option value="candy">5. 스위트 캔디</option>
+                                <option value="cyberpunk">6. 사이버펑크 2077</option>
+                                <option value="matrix">7. 매트릭스 코드</option>
+                                <option value="sunset">8. 캘리포니아 선셋</option>
+                                <option value="deepsea">9. 딥씨 트레져</option>
+                                <option value="magma">10. 마그마 코어</option>
+                                <option value="forest">11. 네이처 포레스트</option>
+                                <option value="royalty">12. 로얄 임페리얼</option>
+                                <option value="cyberpunk2">13. 네온 글리치</option>
+                                <option value="ice">14. 글레이셜아이스</option>
+                                <option value="bubblegum">15. 버블검 팝</option>
+                                <option value="gold">16. 럭셔리 골드</option>
+                                <option value="toxic">17. 바이오 토식</option>
+                                <option value="vintage">18. 80년대 아케이드</option>
+                                <option value="galaxy">19. 스타더스트</option>
+                                <option value="rainbow">20. 풀 레인보우</option>
+                            </select>
+                        </label>
+
+                        <div class="settings-section-title">⏱️ TIME / BLOCK LIMIT</div>
+                        <label>제한 시간 (초): <input type="number" id="cfg-time" value="120"></label>
+                        <label>제한 블록 갯수: <input type="number" id="cfg-blocks" value="40"></label>
+
+                        <div class="settings-section-title">🏆 SCORE RULES</div>
+                        <label>1줄 삭제: <input type="number" id="cfg-l1" value="30"></label>
+                        <label>2줄 삭제: <input type="number" id="cfg-l2" value="100"></label>
+                        <label>3줄 삭제: <input type="number" id="cfg-l3" value="250"></label>
+                        <label>4줄(테트리스): <input type="number" id="cfg-l4" value="500"></label>
+                        <label>콤보 보너с: <input type="number" id="cfg-combo" value="30"></label>
+                    </div>
+                    <button class="btn" onclick="closeSettings()">SAVE & BACK</button>
+                </div>
+                
+                <div id="gameover-screen" class="overlay" style="display: none;">
+                    <h1>GAME OVER</h1>
+                    <p id="final-score" style="margin-bottom: 15px; font-size: 15px; color: #00ffff; font-weight: bold; text-shadow: 0 0 12px #00ffff;">SCORE: 0</p>
+                    <div class="menu-group">
+                        <button class="btn" onclick="restartGame()">RESTART</button>
+                        <button class="btn btn-sub" onclick="returnToMenu()">MAIN MENU</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="side-panel">
+            <div class="panel-box controls-guide">
+                <h3>CONTROLS</h3>
+                <div><span>← →</span> 이동</div>
+                <div><span>↑</span> 회전</div>
+                <div><span>↓</span> 소프트</div>
+                <div><span>SPACE</span> 하드</div>
+            </div>
+
+            <div class="mobile-bottom-area">
+                <button class="quit-btn" onclick="quitGame()">QUIT / PAUSE</button>
+                
+                <div class="panel-box" style="margin-top: 5px;">
+                    <h3>TOUCH PAD</h3>
+                    <div class="touch-controls">
+                        <button class="control-btn" onclick="playerMove(-1)">◀</button>
+                        <button class="control-btn" onclick="playerRotate(1)">🔄</button>
+                        <button class="control-btn" onclick="playerDrop()">▼</button>
+                        <button class="control-btn" onclick="playerMove(1)">▶</button>
+                        <button class="control-btn action-drop" onclick="playerHardDrop()">🚀 DROP</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('tetris');
+    const ctx = canvas.getContext('2d');
+    const nextCanvas = document.getElementById('next-canvas');
+    const nextCtx = nextCanvas.getContext('2d');
+
+    const BLOCK_SIZE = 30;
+    const COLS = 10;
+    const ROWS = 20;
+
+    ctx.scale(BLOCK_SIZE, BLOCK_SIZE);
+    nextCtx.scale(BLOCK_SIZE, BLOCK_SIZE);
+
+    // 오디오 컨텍스트 초기화 (모바일 터치 잠금 해제 대응)
+    let audioCtx = null;
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    // 비트 효과음 생성 함수 (Web Audio API 신디사이저)
+    function playBeepSound(type) {
+        try {
+            initAudio();
+            if (!audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            let now = audioCtx.currentTime;
+
+            if (type === 'drop') {
+                // 블록 착지 때 탁 떨어지는 저음 타격 비트
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.08);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'clear') {
+                // 라인 클리어 시 화려한 아케이드 성공 멜로디 비트
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(554.37, now + 0.06);
+                osc.frequency.setValueAtTime(659.25, now + 0.12);
+                osc.frequency.setValueAtTime(880, now + 0.18);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+        } catch (e) {
+            // 오디오 차단 예외 처리
+        }
+    }
+
+    const COLOR_PALETTES = {
+        neon: [null, '#00ffff', '#ff00ff', '#ff9900', '#ffff00', '#00ff66', '#b000ff', '#ff0055'],
+        pastel: [null, '#70a1ff', '#ff7f50', '#ff6b81', '#ffeaa7', '#2ed573', '#9b59b6', '#ff4757'],
+        mono: [null, '#ffffff', '#e0e0e0', '#bcbcbc', '#9a9a9a', '#787878', '#565656', '#343434'],
+        retro: [null, '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffffff'],
+        candy: [null, '#ff9a9e', '#fecfef', '#a1c4fd', '#c2e9fb', '#ffecd2', '#fcb69f', '#ff8177'],
+        cyberpunk: [null, '#f72585', '#7209b7', '#3a0ca3', '#4361ee', '#4cc9f0', '#ff007f', '#00f5d4'],
+        matrix: [null, '#00ff66', '#00cc55', '#009944', '#00ff88', '#33ff77', '#004411', '#88ffaa'],
+        sunset: [null, '#ff4e50', '#f9d423', '#ff7676', '#ffa07a', '#ff6347', '#ff1493', '#ff8c00'],
+        deepsea: [null, '#00b4d8', '#0077b6', '#03045e', '#90e0ef', '#48cae4', '#ade8f4', '#023e8a'],
+        magma: [null, '#d90429', '#ef233c', '#8d0801', '#ff5400', '#ff7b00', '#ffb703', '#fb8500'],
+        forest: [null, '#38b000', '#70e000', '#007200', '#008000', '#2d6a4f', '#52b788', '#95d5b2'],
+        royalty: [null, '#7b2cbf', '#9d4edd', '#c77dff', '#e0aaff', '#5a189a', '#3c096c', '#240046'],
+        cyberpunk2: [null, '#ff0055', '#00f3ff', '#39ff14', '#ffff00', '#ff00ff', '#00ffff', '#ff5500'],
+        ice: [null, '#caf0f8', '#ade8f4', '#90e0ef', '#00b4d8', '#0077b6', '#03045e', '#ffffff'],
+        bubblegum: [null, '#ff70a6', '#ff9770', '#ffd670', '#e9ff70', '#70d6ff', '#b870ff', '#ff70e2'],
+        gold: [null, '#ffd700', '#ffc107', '#ff9800', '#ffb300', '#ffe082', '#ffecb3', '#fff8e1'],
+        toxic: [null, '#39ff14', '#ccff00', '#00ff66', '#66ff00', '#00cc00', '#99ff33', '#ccff66'],
+        vintage: [null, '#cc6633', '#993300', '#ff9933', '#cc9966', '#663300', '#ffcc99', '#996633'],
+        galaxy: [null, '#7209b7', '#3a0ca3', '#4361ee', '#4cc9f0', '#f72585', '#b5179e', '#7209b7'],
+        rainbow: [null, '#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#8b00ff']
+    };
+
+    let activeColors = COLOR_PALETTES.neon;
+    let customBgImage = null;
+    let customBlockImage = null;
+
+    const SHAPES = [
+        [],
+        [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]],
+        [[2, 0, 0], [2, 2, 2], [0, 0, 0]],
+        [[0, 0, 3], [3, 3, 3], [0, 0, 0]],
+        [[4, 4], [4, 4]],
+        [[0, 5, 5], [5, 5, 0], [0, 0, 0]],
+        [[0, 6, 0], [6, 6, 6], [0, 0, 0]],
+        [[7, 7, 0], [0, 7, 7], [0, 0, 0]]
+    ];
+
+    let arena = createMatrix(COLS, ROWS);
+    let score = 0;
+    let level = 1;
+    let combo = 0;
+    let dropInterval = 1000;
+    let dropCounter = 0;
+    let lastTime = 0;
+    let gameOverFlag = true;
+    let isPaused = false;
+
+    let currentMode = 'classic';
+    let timeLeft = 120;
+    let blocksLeft = 40;
+    let modeTimer = null;
+
+    let ruleConfig = {
+        bgStyle: 'cyber',
+        blockStyle: 'neon',
+        timeLimit: 120,
+        maxBlocks: 40,
+        l1: 30,
+        l2: 100,
+        l3: 250,
+        l4: 500,
+        combo: 30
+    };
+
+    let particles = [];
+
+    function applyTheme() {
+        const body = document.body;
+        if (customBgImage) {
+            body.style.background = `url('${customBgImage}') no-repeat center center fixed`;
+            body.style.backgroundSize = 'cover';
+        } else {
+            const bg = ruleConfig.bgStyle;
+            const themes = {
+                cyber: 'radial-gradient(circle at center, #2b0054 0%, #010004 100%)',
+                dark: '#0a0a0a',
+                matrix: 'radial-gradient(circle at center, #005f33 0%, #001103 100%)',
+                synthwave: 'radial-gradient(circle at center, #4a0e4e 0%, #0a0118 100%)',
+                galaxy: 'radial-gradient(circle at center, #1b003a 0%, #030008 100%)',
+                sunset: 'radial-gradient(circle at center, #6b2d5c 0%, #120108 100%)',
+                ocean: 'radial-gradient(circle at center, #033048 0%, #000408 100%)',
+                fire: 'radial-gradient(circle at center, #590d22 0%, #0a0002 100%)',
+                emerald: 'radial-gradient(circle at center, #084c61 0%, #010c14 100%)',
+                amethyst: 'radial-gradient(circle at center, #3c096c 0%, #0a0112 100%)',
+                gold: 'radial-gradient(circle at center, #4d3800 0%, #0d0a00 100%)',
+                arctic: 'radial-gradient(circle at center, #1d3557 0%, #050b14 100%)',
+                cherry: 'radial-gradient(circle at center, #590d35 0%, #0f020a 100%)',
+                toxic: 'radial-gradient(circle at center, #2d4f00 0%, #071200 100%)',
+                midnight: 'radial-gradient(circle at center, #0b132b 0%, #010308 100%)',
+                crimson: 'radial-gradient(circle at center, #641220 0%, #0d0204 100%)',
+                cyberpunk: 'radial-gradient(circle at center, #415a77 0%, #0d1b2a 100%)',
+                abyss: 'radial-gradient(circle at center, #02010a 0%, #000000 100%)',
+                coffee: 'radial-gradient(circle at center, #3d2c1e 0%, #0f0b07 100%)',
+                rainbow: 'radial-gradient(circle at center, #3a0ca3 0%, #10002b 100%)'
+            };
+            body.style.background = themes[bg] || themes.cyber;
+        }
+        activeColors = COLOR_PALETTES[ruleConfig.blockStyle] || COLOR_PALETTES.neon;
+    }
+
+    function triggerMegaImpact(dropX, dropY) {
+        playBeepSound('drop'); // 블록 착지 비트 재생
+        const wrapper = document.getElementById('board-wrapper');
+        wrapper.classList.remove('shake');
+        void wrapper.offsetWidth;
+        wrapper.classList.add('shake');
+
+        const flash = document.getElementById('flash-overlay');
+        flash.classList.add('active');
+        setTimeout(() => flash.classList.remove('active'), 100);
+
+        for (let i = 0; i < 80; i++) {
+            particles.push({
+                x: dropX !== undefined ? dropX : Math.random() * COLS,
+                y: dropY !== undefined ? dropY : ROWS - 2,
+                vx: (Math.random() - 0.5) * 1.8,
+                vy: (Math.random() - 0.7) * 1.8,
+                color: ['#00ffff', '#ff00ff', '#ffff00', '#ffffff'][Math.floor(Math.random() * 4)],
+                life: 1.2,
+                size: Math.random() * 0.5 + 0.2
+            });
+        }
+    }
+
+    function createHyperClearSparks(rowY) {
+        playBeepSound('clear'); // 줄 클리어 멜로디 비트 재생
+        for (let i = 0; i < 150; i++) {
+            particles.push({
+                x: Math.random() * COLS,
+                y: rowY,
+                vx: (Math.random() - 0.5) * 2.5,
+                vy: (Math.random() - 0.5) * 2.5 - 0.6,
+                color: ['#00ffff', '#ff00ff', '#ffff00', '#ffffff'][Math.floor(Math.random() * 4)],
+                life: 1.5,
+                size: Math.random() * 0.7 + 0.3
+            });
+        }
+    }
+
+    function updateParticles() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.04;
+            p.life -= 0.02;
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+    }
+
+    function drawParticles() {
+        particles.forEach(p => {
+            ctx.fillStyle = p.color;
+            ctx.shadowColor = p.color;
+            ctx.shadowBlur = 30;
+            ctx.fillRect(p.x, p.y, p.size, p.size);
+        });
+        ctx.shadowBlur = 0;
+    }
+
+    let comboTimeout = null;
+    function showComboPopup(text) {
+        const popup = document.getElementById('combo-popup');
+        popup.innerText = text;
+        popup.classList.add('show');
+        if (comboTimeout) clearTimeout(comboTimeout);
+        comboTimeout = setTimeout(() => popup.classList.remove('show'), 800);
+    }
+
+    const player = { pos: {x: 0, y: 0}, matrix: null };
+    const nextPlayer = { matrix: null };
+
+    function createMatrix(w, h) {
+        const matrix = [];
+        while (h--) matrix.push(new Array(w).fill(0));
+        return matrix;
+    }
+
+    function createPiece(type) { return SHAPES[type]; }
+
+    function drawMatrix(matrix, offset, context = ctx, isNext = false) {
+        matrix.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value !== 0) {
+                    if (customBlockImage && customBlockImage.complete) {
+                        context.drawImage(customBlockImage, x + offset.x, y + offset.y, 1, 1);
+                    } else {
+                        context.fillStyle = activeColors[value];
+                        context.shadowColor = activeColors[value];
+                        context.shadowBlur = isNext ? 12 : 30;
+                        context.fillRect(x + offset.x, y + offset.y, 1, 1);
+                    }
+                    context.strokeStyle = '#ffffff';
+                    context.lineWidth = 0.12;
+                    context.strokeRect(x + offset.x, y + offset.y, 1, 1);
+                }
+            });
+        });
+        context.shadowBlur = 0;
+    }
+
+    function draw() {
+        ctx.fillStyle = 'rgba(2, 0, 10, 0.4)';
+        ctx.fillRect(0, 0, COLS, ROWS);
+
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.22)';
+        ctx.lineWidth = 0.04;
+        for (let x = 0; x < COLS; x++) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, ROWS);
+            ctx.stroke();
+        }
+        for (let y = 0; y < ROWS; y++) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(COLS, y);
+            ctx.stroke();
+        }
+
+        drawMatrix(arena, {x: 0, y: 0});
+        if (!gameOverFlag && !isPaused && player.matrix) {
+            drawMatrix(player.matrix, player.pos);
+        }
+
+        updateParticles();
+        drawParticles();
+    }
+
+    function drawNext() {
+        nextCtx.fillStyle = 'rgba(0, 0, 0, 0)';
+        nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+        const matrix = nextPlayer.matrix;
+        if (!matrix) return;
+        const offset = {
+            x: (2 - matrix[0].length) / 2,
+            y: (2 - matrix.length) / 2
+        };
+        drawMatrix(matrix, offset, nextCtx, true);
+    }
+
+    function merge(arena, player) {
+        let avgX = player.pos.x + player.matrix[0].length / 2;
+        let avgY = player.pos.y + player.matrix.length / 2;
+        player.matrix.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value !== 0) arena[y + player.pos.y][x + player.pos.x] = value;
+            });
+        });
+        triggerMegaImpact(avgX, avgY);
+    }
+
+    function rotate(matrix, dir) {
+        for (let y = 0; y < matrix.length; ++y) {
+            for (let x = 0; x < y; ++x) {
+                [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+            }
+        }
+        if (dir > 0) matrix.forEach(row => row.reverse());
+        else matrix.reverse();
+    }
+
+    function playerRotate(dir) {
+        if (gameOverFlag || isPaused) return;
+        initAudio();
+        const posX = player.pos.x;
+        let offset = 1;
+        rotate(player.matrix, dir);
+        while (collide(arena, player)) {
+            player.pos.x += offset;
+            offset = -(offset + (offset > 0 ? 1 : -1));
+            if (offset > player.matrix[0].length) {
+                rotate(player.matrix, -dir);
+                player.pos.x = posX;
+                return;
+            }
+        }
+    }
+
+    function collide(arena, player) {
+        const m = player.matrix;
+        const o = player.pos;
+        for (let y = 0; y < m.length; ++y) {
+            for (let x = 0; x < m[y].length; ++x) {
+                if (m[y][x] !== 0 && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) return true;
+            }
+        }
+        return false;
+    }
+
+    function playerDrop() {
+        if (gameOverFlag || isPaused) return;
+        player.pos.y++;
+        if (collide(arena, player)) {
+            player.pos.y--;
+            merge(arena, player);
+            playerReset();
+            arenaSweep();
+            updateStats();
+        }
+        dropCounter = 0;
+    }
+
+    function playerHardDrop() {
+        if (gameOverFlag || isPaused) return;
+        while (!collide(arena, player)) {
+            player.pos.y++;
+        }
+        player.pos.y--;
+        merge(arena, player);
+        playerReset();
+        arenaSweep();
+        updateStats();
+        dropCounter = 0;
+    }
+
+    function playerMove(dir) {
+        if (gameOverFlag || isPaused) return;
+        initAudio();
+        player.pos.x += dir;
+        if (collide(arena, player)) player.pos.x -= dir;
+    }
+
+    function playerReset() {
+        if (nextPlayer.matrix === null) {
+            nextPlayer.matrix = createPiece(Math.floor(Math.random() * 7) + 1);
+        }
+        player.matrix = nextPlayer.matrix;
+        nextPlayer.matrix = createPiece(Math.floor(Math.random() * 7) + 1);
+        player.pos.y = 0;
+        player.pos.x = Math.floor((COLS - player.matrix[0].length) / 2);
+
+        if (currentMode === 'blockLimit') {
+            blocksLeft--;
+            if (blocksLeft < 0) {
+                endGame();
+                return;
+            }
+        }
+
+        if (collide(arena, player)) {
+            endGame();
+        }
+        drawNext();
+    }
+
+    function arenaSweep() {
+        let rowCount = 0;
+        outer: for (let y = arena.length - 1; y > 0; --y) {
+            for (let x = 0; x < arena[y].length; x++) {
+                if (arena[y][x] === 0) continue outer;
+            }
+            const row = arena.splice(y, 1)[0].fill(0);
+            arena.unshift(row);
+            y++;
+            rowCount++;
+            createHyperClearSparks(y);
+        }
+
+        if (rowCount > 0) {
+            combo++;
+
+            let baseScore = 0;
+            if (rowCount === 1) baseScore = ruleConfig.l1;
+            else if (rowCount === 2) baseScore = ruleConfig.l2;
+            else if (rowCount === 3) baseScore = ruleConfig.l3;
+            else if (rowCount >= 4) baseScore = ruleConfig.l4;
+
+            let comboBonus = combo > 1 ? (combo * ruleConfig.combo) : 0;
+            let earned = (baseScore + comboBonus) * level;
+            score += earned;
+
+            if (rowCount >= 4) {
+                showComboPopup("HYPER TETRIS!! 🚀🔥");
+            } else if (combo >= 2) {
+                showComboPopup(`${combo} COMBO!! ✨⚡`);
+            }
+        } else {
+            combo = 0;
+        }
+
+        level = Math.floor(score / 600) + 1;
+        dropInterval = Math.max(120, 1000 - (level - 1) * 110);
+    }
+
+    function updateStats() {
+        document.getElementById('score').innerText = score;
+        if (currentMode === 'timeAttack') {
+            document.getElementById('level').innerText = `${timeLeft}s`;
+        } else if (currentMode === 'blockLimit') {
+            document.getElementById('level').innerText = `${blocksLeft} 남음`;
+        } else {
+            document.getElementById('level').innerText = level;
+        }
+    }
+
+    function update(time = 0) {
+        if (gameOverFlag) return;
+        
+        if (!isPaused) {
+            const deltaTime = time - lastTime;
+            dropCounter += deltaTime;
+            if (dropCounter > dropInterval) playerDrop();
+        }
+        
+        lastTime = time;
+        draw();
+        requestAnimationFrame(update);
+    }
+
+    document.addEventListener('keydown', event => {
+        initAudio();
+        if (gameOverFlag || isPaused) return;
+        if (event.key === 'ArrowLeft') playerMove(-1);
+        else if (event.key === 'ArrowRight') playerMove(1);
+        else if (event.key === 'ArrowDown') playerDrop();
+        else if (event.key === 'ArrowUp') playerRotate(1);
+        else if (event.key === ' ') { event.preventDefault(); playerHardDrop(); }
+    });
+
+    function startGame(mode) {
+        initAudio();
+        currentMode = mode;
+        arena.forEach(row => row.fill(0));
+        score = 0;
+        level = 1;
+        combo = 0;
+        dropInterval = 1000;
+        gameOverFlag = false;
+        isPaused = false;
+
+        if (currentMode === 'timeAttack') {
+            timeLeft = ruleConfig.timeLimit;
+            document.getElementById('stat-title').innerText = 'SCORE';
+            document.getElementById('sub-stat-title').innerText = 'TIME';
+            if (modeTimer) clearInterval(modeTimer);
+            modeTimer = setInterval(() => {
+                if (gameOverFlag || isPaused) return;
+                timeLeft--;
+                updateStats();
+                if (timeLeft <= 0) endGame();
+            }, 1000);
+        } else if (currentMode === 'blockLimit') {
+            blocksLeft = ruleConfig.maxBlocks;
+            document.getElementById('stat-title').innerText = 'SCORE';
+            document.getElementById('sub-stat-title').innerText = 'BLOCKS';
+        } else {
+            document.getElementById('stat-title').innerText = 'SCORE';
+            document.getElementById('sub-stat-title').innerText = 'LEVEL';
+        }
+
+        updateStats();
+        
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('pause-screen').style.display = 'none';
+        document.getElementById('settings-screen').style.display = 'none';
+        document.getElementById('gameover-screen').style.display = 'none';
+        
+        nextPlayer.matrix = createPiece(Math.floor(Math.random() * 7) + 1);
+        playerReset();
+        lastTime = performance.now();
+        update();
+    }
+
+    function restartGame() {
+        initAudio();
+        document.getElementById('pause-screen').style.display = 'none';
+        document.getElementById('gameover-screen').style.display = 'none';
+        startGame(currentMode);
+    }
+
+    function resumeGame() {
+        initAudio();
+        isPaused = false;
+        document.getElementById('pause-screen').style.display = 'none';
+        lastTime = performance.now();
+    }
+
+    function endGame() {
+        gameOverFlag = true;
+        if (modeTimer) clearInterval(modeTimer);
+        document.getElementById('final-score').innerText = `SCORE: ${score}`;
+        document.getElementById('gameover-screen').style.display = 'flex';
+    }
+
+    function returnToMenu() {
+        initAudio();
+        gameOverFlag = true;
+        isPaused = false;
+        if (modeTimer) clearInterval(modeTimer);
+        arena.forEach(row => row.fill(0));
+        draw();
+        document.getElementById('pause-screen').style.display = 'none';
+        document.getElementById('gameover-screen').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'flex';
+    }
+
+    function quitGame() {
+        initAudio();
+        if (gameOverFlag) {
+            returnToMenu();
+        } else {
+            isPaused = true;
+            document.getElementById('pause-screen').style.display = 'flex';
+        }
+    }
+
+    function openSettings() {
+        initAudio();
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('settings-screen').style.display = 'flex';
+    }
+
+    function closeSettings() {
+        initAudio();
+        ruleConfig.bgStyle = document.getElementById('cfg-bg').value;
+        ruleConfig.blockStyle = document.getElementById('cfg-block').value;
+        ruleConfig.timeLimit = parseInt(document.getElementById('cfg-time').value) || 120;
+        ruleConfig.maxBlocks = parseInt(document.getElementById('cfg-blocks').value) || 40;
+        ruleConfig.l1 = parseInt(document.getElementById('cfg-l1').value) || 30;
+        ruleConfig.l2 = parseInt(document.getElementById('cfg-l2').value) || 100;
+        ruleConfig.l3 = parseInt(document.getElementById('cfg-l3').value) || 250;
+        ruleConfig.l4 = parseInt(document.getElementById('cfg-l4').value) || 500;
+        ruleConfig.combo = parseInt(document.getElementById('cfg-combo').value) || 30;
+
+        const bgInput = document.getElementById('bg-file');
+        if (bgInput.files && bgInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                customBgImage = e.target.result;
+                applyTheme();
+            }
+            reader.readAsDataURL(bgInput.files[0]);
+        }
+
+        const blockInput = document.getElementById('block-file');
+        if (blockInput.files && blockInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                customBlockImage = new Image();
+                customBlockImage.src = e.target.result;
+            }
+            reader.readAsDataURL(blockInput.files[0]);
+        }
+
+        applyTheme();
+        document.getElementById('settings-screen').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'flex';
+    }
+</script>
+</body>
+</html>
